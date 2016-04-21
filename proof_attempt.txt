@@ -1,0 +1,19 @@
+Theorem: If the code isn't a connect sum, we can't have 1231 a 2 b 3 c   or 1231 a 3 b 2 c   where a, b, and c are arbitrary strings.
+
+Attempted proof for 1231 a 2 b 3 c: (proof for other case is almost identical)
+Re-number as 7897 a 8 b 9 c, where 7, 8, 9 stand for the three highest letters in the code.
+Rotate to 97 a 8 b 9 c 78.
+
+Claim: At every stage before we swap between the 7s, a shares an element with b-union-c, b shares and element with a-union-c, and c shares an element with a-union-b.
+Proof of claim:
+The claim holds before the first swap; otherwise, the code would be a connect sum.
+Now, consider the first swap. If the two 1s are fully within a, b, or c, then the claim must still hold afterwards. If the first 1 is in a and the second is in b, then there will remain a 1 in each of a and b, and the bag of elements in a-union-b will not have changed. The final case we need to consider is if the first 1 is in a and the second is in c. In this case, there will remain a 1 in each of a and c, and the contents of a-union-c will not have changed.
+
+The same argument applies after swaps between 2, 3, etc.
+
+Before the swaps between 7s, we have either
+97 a 8 b 9 c 78 (case 1)
+or
+97 a 9 b 8 c 89 (case 2)
+
+TODO: perform swaps 7, 8, 9, and show that either a, b, or c must be "trapped".
