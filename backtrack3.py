@@ -204,6 +204,10 @@ def search_recursive(N, i, min_permissible_gap, arr, results):
 
     first_empty = arr.index(-1)
         
+    if first_empty == i*2 and i>0:
+        # print "First i*2 elements of array are full. Returning."
+        return
+
     arr[first_empty] = i
     j = first_empty + min_permissible_gap + 1
 
