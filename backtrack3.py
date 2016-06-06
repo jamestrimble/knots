@@ -157,7 +157,21 @@ def gap_4_quick_check(arr):
     return False
 
 
-def special_case_failure(i, j, N, arr, min_permissible_gap, first_empty):
+def special_case_failures1(i, j, arr, min_permissible_gap, first_empty):
+    if i==1 and j==4:
+        # Array can't start with 01201 (because of dually pairedness)
+        return True
+    elif arr[min_permissible_gap+2]!=1:
+        if i>1 and arr[first_empty-1]==arr[j-1]:
+            # if we don't have 01......01 then we can't have xi......xi
+            return True
+        elif i>2 and arr[first_empty-2]==arr[j-2] and arr[min_permissible_gap+3]!=2:
+            # if we don't have 01......01 and we don't have 012.....0x2 
+            # then we can't have x.i......x.i
+            return True
+    return False
+
+def special_case_failures2(i, j, N, arr, min_permissible_gap, first_empty):
     if i==2 and min_permissible_gap==2:
         # Can't have 0120......1......2..... or 0120.....2......1......
         if j==N*2-1:
@@ -204,26 +218,15 @@ def search_recursive(N, i, min_permissible_gap, arr, results):
     arr[first_empty] = i
     j = first_empty + min_permissible_gap + 1
 
-    # An ugly wee bit of symmetry breaking. TODO: generalise this?
-    if j < N*2:
-        if i==1 and j==4:
-            # Array can't start with 01201 (because of dually pairedness)
-            j+=2
-        elif arr[min_permissible_gap+2]!=1:
-            if i>1 and arr[first_empty-1]==arr[j-1]:
-                # if we don't have 01......01 then we can't have xi......xi
-                j+=2
-            elif i>2 and arr[first_empty-2]==arr[j-2] and arr[min_permissible_gap+3]!=2:
-                # if we don't have 01......01 and we don't have 012.....0x2 
-                # then we can't have x.i......x.i
-                j+=2
+    if j < N*2 and special_case_failures1(i, j, arr, min_permissible_gap, first_empty):
+        j += 2
 
     while j < N*2:
         if arr[j] == -1:
             gap = j-first_empty-1
             gap = min(gap, N*2-gap-2)
             if gap >= min_permissible_gap:
-                if special_case_failure(i, j, N, arr, min_permissible_gap, first_empty):
+                if special_case_failures2(i, j, N, arr, min_permissible_gap, first_empty):
                     j += 2
                     continue
 
