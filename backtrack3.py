@@ -157,13 +157,49 @@ def gap_4_quick_check(arr):
     return False
 
 
+def special_case_failure(i, j, N, arr, min_permissible_gap, first_empty):
+    if i==2 and min_permissible_gap==2:
+        # Can't have 0120......1......2..... or 0120.....2......1......
+        if j==N*2-1:
+            return True 
+        elif arr[j-1]!=1 and arr[j+1]!=1:
+            return True 
+        elif arr[-2]==1 and j==2*N-3:
+            # Can't have 0120........21. (lex min)
+            return True 
+        elif arr[-4]==1 and j==2*N-3:
+            # Can't have 0120.......12.. (lex min)
+            return True 
+        elif arr[-4]==1 and j==2*N-5:
+            # Can't have 0120......21... (lex min)
+            return True 
+    elif min_permissible_gap==2:
+        #Generalise can't have 0120......1......2..... or 0120.....2......1......
+        if j-first_empty==3:# and arr[j-2]!=-1 and arr[j-1]!=-1:
+            a = arr[j-1]
+            b = arr[j-2]
+            for k in range(first_empty-1):
+                if arr[k]==a:
+                    if arr[k+1]!=b: return True
+                    break
+                elif arr[k]==b:
+                    if arr[k+1]!=a: return True
+                    break
+        elif arr[first_empty-1]==arr[first_empty+2] and j<N*2-1:
+            a = arr[first_empty+1]
+            if arr[j+1]!=a and arr[j-1]!=a:
+                return True 
+        elif i>1 and arr[first_empty-2]==arr[first_empty+1] and j<N*2-1:
+            a = arr[first_empty-1]
+            if arr[j+1]!=a and arr[j-1]!=a:
+                return True
+    return False
+
 def search_recursive(N, i, min_permissible_gap, arr, results):
     if i<N-3 and i%2 and mini_gap_4_check(arr):
         return
 
-    first_empty = i
-    while arr[first_empty] != -1:
-        first_empty += 1
+    first_empty = arr.index(-1)
         
     arr[first_empty] = i
     j = first_empty + min_permissible_gap + 1
@@ -187,48 +223,9 @@ def search_recursive(N, i, min_permissible_gap, arr, results):
             gap = j-first_empty-1
             gap = min(gap, N*2-gap-2)
             if gap >= min_permissible_gap:
-                if i==2 and min_permissible_gap==2:
-                    # Can't have 0120......1......2..... or 0120.....2......1......
-                    if j==N*2-1:
-                        break
-                    elif arr[j-1]!=1 and arr[j+1]!=1:
-                        j += 2
-                        continue
-                    elif arr[-2]==1 and j==2*N-3:
-                        # Can't have 0120........21. (lex min)
-                        break
-                    elif arr[-4]==1 and j==2*N-3:
-                        # Can't have 0120.......12.. (lex min)
-                        break
-                    elif arr[-4]==1 and j==2*N-5:
-                        # Can't have 0120......21... (lex min)
-                        break
-                elif min_permissible_gap==2:
-                    #Generalise can't have 0120......1......2..... or 0120.....2......1......
-                    if j-first_empty==3:# and arr[j-2]!=-1 and arr[j-1]!=-1:
-                        a = arr[j-1]
-                        b = arr[j-2]
-                        first = -1
-                        restart = False
-                        for k in range(first_empty-1):
-                            x = arr[k]
-                            if x==a or x==b:
-                                if arr[k+1]!=a and arr[k+1]!=b:
-                                    restart = True
-                                break
-                        if restart:
-                            j+=2
-                            continue
-                    elif arr[first_empty-1]==arr[first_empty+2] and j<N*2-1:
-                        a = arr[first_empty+1]
-                        if arr[j+1]!=a and arr[j-1]!=a:
-                            j+=2
-                            continue
-                    elif i>1 and arr[first_empty-2]==arr[first_empty+1] and j<N*2-1:
-                        a = arr[first_empty-1]
-                        if arr[j+1]!=a and arr[j-1]!=a:
-                            j+=2
-                            continue
+                if special_case_failure(i, j, N, arr, min_permissible_gap, first_empty):
+                    j += 2
+                    continue
 
                 arr[j] = i
                 if i < N-1:
