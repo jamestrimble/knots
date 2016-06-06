@@ -101,7 +101,6 @@ def is_lex_leq_rotation(arr, pos_of_second_zero_in_arr, arr_, rotate_by):
                 return False
     return True
 
-
 def is_lex_leq_rotations(arr, pos_of_second_zero_in_arr, arr_):
     "Returns True iff arr is <= all rotations of arr_ lexicographically"
     for i in xrange(1, len(arr)):
@@ -109,13 +108,11 @@ def is_lex_leq_rotations(arr, pos_of_second_zero_in_arr, arr_):
             return False
     return True
 
-
 def is_lex_min_in_group(arr, pos_of_second_zero_in_arr):
     return (
             is_lex_leq_rotations(arr, pos_of_second_zero_in_arr, arr) and
             is_lex_leq_rotations(arr, pos_of_second_zero_in_arr, list(reversed(arr))) and
             is_lex_leq_rotation(arr, pos_of_second_zero_in_arr, list(reversed(arr)), 0))
-
 
 def gap_4_quick_check(arr):
     # returns True iff arr is something like 012340.....0451....2893....
@@ -124,7 +121,7 @@ def gap_4_quick_check(arr):
     unpaired = 0#[False] * (len(arr)/2)
     between = False
     for i in range(-len(arr), 0):
-        for gap_size in [4, 6, 8]:
+        for gap_size in [4, 6]:
             if arr[i] == arr[i+gap_size+1] != -1:
                 b = arr[i+1:i+gap_size+1] # values between the two occurrences of arr[i]
                 if -1 not in b and len(b) == len(set(b)):  # alldiff(b)
@@ -190,6 +187,17 @@ def special_case_failures2(i, j, N, arr, min_permissible_gap, first_empty):
                 return True
     return False
 
+def result_is_valid(arr, min_permissible_gap):
+    return (not gap_4_quick_check(arr) and
+            is_lex_min_in_group(arr, min_permissible_gap+1) and
+            is_dually_paired(arr) and
+            not is_connect_sum(arr))
+    
+def show_progress(i, N, arr):
+    if i==2:
+        print
+        print " ".join(["." if c==-1 else str(c) for c in arr]), "{0:.3f}".format(time.time()-START_TIME)
+
 def search_recursive(N, i, min_permissible_gap, arr, results):
     if i<N-3 and i%2 and gap_4_quick_check(arr):
         return
@@ -205,25 +213,14 @@ def search_recursive(N, i, min_permissible_gap, arr, results):
     while j < N*2:
         if arr[j] == -1:
             gap = j-first_empty-1
-            gap = min(gap, N*2-gap-2)
-            if gap >= min_permissible_gap:
-                if special_case_failures2(i, j, N, arr, min_permissible_gap, first_empty):
-                    j += 2
-                    continue
-
+            if gap >= min_permissible_gap and N*2-gap-2 >= min_permissible_gap and not special_case_failures2(
+                        i, j, N, arr, min_permissible_gap, first_empty):
                 arr[j] = i
                 if i < N-1:
-                    if i==2:
-                        print
-                        print " ".join(["." if c==-1 else str(c) for c in arr]), "{0:.3f}".format(time.time()-START_TIME)
+                    show_progress(i, N, arr)
                     search_recursive(N, i+1, min_permissible_gap, arr, results)
-                else:
-                    candidate = arr[:]
-                    if (    not gap_4_quick_check(candidate) and
-                            is_lex_min_in_group(candidate, min_permissible_gap+1) and
-                            is_dually_paired(candidate) and
-                            not is_connect_sum(candidate)):
-                        results.append([x+1 for x in candidate])
+                elif result_is_valid(arr, min_permissible_gap):
+                    results.append([x+1 for x in arr])
                 arr[j] = -1 
         j+=2
     arr[first_empty] = -1
@@ -242,15 +239,15 @@ def begin_search_recursive(N):
 
 results = begin_search_recursive(int(sys.argv[1]))
 
-print "done"
 print "Number of results:", len(results)
-
-#results.sort()
-#for i in range(len(results)-1):
-#    assert results[i] != results[i+1]
 
 #pprint(results)
 #for r in results:
 #    print "".join(str(x)+", " for x in r)
 print "Time elapsed: ", time.time() - START_TIME
+
+results.sort()
+for i in range(len(results)-1):
+    assert results[i] != results[i+1]
+
 
