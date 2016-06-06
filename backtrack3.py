@@ -117,8 +117,10 @@ def is_lex_min_in_group(arr, pos_of_second_zero_in_arr):
             is_lex_leq_rotation(arr, pos_of_second_zero_in_arr, list(reversed(arr)), 0))
 
 
-def mini_gap_4_check(arr):
-    # Similar to gap_4_quick_check, but for partial assignments
+def gap_4_quick_check(arr):
+    # returns True iff arr is something like 012340.....0451....2893....
+    # (perhaps rotated and renumbered). The problem here is that the numbers
+    # between 1,2,3,4 aren't paired up
     unpaired = 0#[False] * (len(arr)/2)
     between = False
     for i in range(-len(arr), 0):
@@ -135,27 +137,6 @@ def mini_gap_4_check(arr):
                     if unpaired:
                         return True
     return False
-
-def gap_4_quick_check(arr):
-    # returns True iff arr is something like 012340.....0451....2893....
-    # (perhaps rotated and renumbered). The problem here is that the numbers
-    # between 1,2,3,4 aren't paired up
-    unpaired = 0#[False] * (len(arr)/2)
-    between = False
-    for i in range(-len(arr), 0):
-        for gap_size in [4, 6]:
-            if arr[i]==arr[i+gap_size+1]:
-                b = arr[i+1:i+gap_size+1] # values between the two occurrences of arr[i]
-                if len(b) == len(set(b)):  # if alldiff(b)
-                    for j in range(i+gap_size+2, i+len(arr)):
-                        if arr[j] in b:
-                            between = not between
-                        elif between:
-                            unpaired ^= (1<<arr[j])
-                    if unpaired:
-                        return True
-    return False
-
 
 def special_case_failures1(i, j, arr, min_permissible_gap, first_empty):
     if i==1 and j==4:
@@ -210,7 +191,7 @@ def special_case_failures2(i, j, N, arr, min_permissible_gap, first_empty):
     return False
 
 def search_recursive(N, i, min_permissible_gap, arr, results):
-    if i<N-3 and i%2 and mini_gap_4_check(arr):
+    if i<N-3 and i%2 and gap_4_quick_check(arr):
         return
 
     first_empty = arr.index(-1)
@@ -238,23 +219,11 @@ def search_recursive(N, i, min_permissible_gap, arr, results):
                     search_recursive(N, i+1, min_permissible_gap, arr, results)
                 else:
                     candidate = arr[:]
-                    if(
-                             #f(arr, N) and
-                             not gap_4_quick_check(candidate) and
-                             is_lex_min_in_group(candidate, min_permissible_gap+1) and
-                             is_dually_paired(candidate) and
-                             not is_connect_sum(candidate)):
+                    if (    not gap_4_quick_check(candidate) and
+                            is_lex_min_in_group(candidate, min_permissible_gap+1) and
+                            is_dually_paired(candidate) and
+                            not is_connect_sum(candidate)):
                         results.append([x+1 for x in candidate])
-#                        sys.stdout.write(".")
-#                    else:
-#                        if gap_4_quick_check(candidate):
-#                            sys.stdout.write("D")
-#                        elif not is_lex_min_in_group(candidate, min_permissible_gap+1):
-#                            sys.stdout.write("C")
-#                        elif not is_dually_paired(candidate):
-#                            sys.stdout.write("a")
-#                        elif is_connect_sum(candidate):
-#                            sys.stdout.write("B")
                 arr[j] = -1 
         j+=2
     arr[first_empty] = -1
