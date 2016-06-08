@@ -121,8 +121,8 @@ def gap_4_quick_check(arr):
     unpaired = 0#[False] * (len(arr)/2)
     between = False
     between_size = 0
-    for i in range(-len(arr), 0):
-        for gap_size in [4, 6]:
+    for gap_size in range(4, 10, 2) if len(arr) > 20 else []:
+        for i in range(-len(arr), -1):
             num_non_zero_between_sizes = 0
             if arr[i] == arr[i+gap_size+1] != -1:
                 b = arr[i+1:i+gap_size+1] # values between the two occurrences of arr[i]
