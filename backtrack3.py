@@ -120,18 +120,25 @@ def gap_4_quick_check(arr):
     # between 1,2,3,4 aren't paired up
     unpaired = 0#[False] * (len(arr)/2)
     between = False
+    between_size = 0
     for i in range(-len(arr), 0):
         for gap_size in [4, 6]:
+            num_non_zero_between_sizes = 0
             if arr[i] == arr[i+gap_size+1] != -1:
                 b = arr[i+1:i+gap_size+1] # values between the two occurrences of arr[i]
                 if -1 not in b and len(b) == len(set(b)):  # alldiff(b)
                     for j in range(i+gap_size+2, i+len(arr)):
-                        if arr[j] != -1:
-                            if arr[j] in b:
-                                between = not between
-                            elif between:
+                        if arr[j] in b:
+                            between = not between
+                            if not between:
+                                if between_size:
+                                    num_non_zero_between_sizes += 1
+                                between_size = 0
+                        elif between:
+                            between_size += 1
+                            if arr[j] != -1:
                                 unpaired ^= (1<<arr[j])
-                    if unpaired:
+                    if unpaired or num_non_zero_between_sizes == 1:
                         return True
     return False
 
