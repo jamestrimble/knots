@@ -125,7 +125,10 @@ def gap_4_quick_check(arr):
         for i in range(-len(arr), -1):
             num_non_zero_between_sizes = 0
             if arr[i] == arr[i+gap_size+1] != -1:
-                b = arr[i+1:i+gap_size+1] # values between the two occurrences of arr[i]
+                if i+gap_size+1 < 0:
+                    b = arr[i+1:i+gap_size+1] # values between the two occurrences of arr[i]
+                else:
+                    b = arr[i+1:] + arr[:i+gap_size+1] # values between the two occurrences of arr[i]
                 if -1 not in b and len(b) == len(set(b)):  # alldiff(b)
                     for j in range(i+gap_size+2, i+len(arr)):
                         if arr[j] in b:
