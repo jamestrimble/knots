@@ -122,7 +122,7 @@ def gap_4_quick_check(arr):
     between = False
     between_size = 0
     for gap_size in range(4, 10, 2) if len(arr) > 20 else []:
-        for i in range(-len(arr), -1):
+        for i in range(-len(arr), 0):
             num_non_zero_between_sizes = 0
             if arr[i] == arr[i+gap_size+1] != -1:
                 if i+gap_size+1 < 0:
