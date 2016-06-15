@@ -23,7 +23,7 @@ int min(int i, int j) {
 
 bool is_connect_sum(crossing* code, int N) {
     bool is_used[MAX_N];
-    for (int i=1; i<N*2-1; i++) {
+    for (int i=0; i<N*2-1; i++) {
         int n_used = 0;
         for (int j=0; j<N; j++) is_used[j] = false;
         for (int j=i; j<N*2-1; j++) {
@@ -212,15 +212,115 @@ bool is_lex_min_in_group_part_1(crossing* code, int N, int p) {
 }
 
 void print_code(crossing* code, int N) {
-    for (int j=0; j<N*2; j += 2) {
+    for (int j=0; j<N*2; j += 2)
         printf("%d %d ", code[j], code[j+1]);
-    }
     printf("\n");
+}
+
+bool quick_check(crossing* code, int N) {
+    if (N < 10) return false;
+
+    int unpaired = 0;   // A bitset, where bit i is set if crossing i
+                        // doesn't appear twice in relevant areas
+    bool between = false;
+    int between_size = 0;
+    
+    for (int gap_size=4; gap_size<10; gap_size+=2) {
+        for (int i=0; i<N-3; i++) { // Upper limit could be anything up to N*2
+            int num_non_zero_between_sizes = 0;
+            if (code[i]!=NONE && code[i]==code[(i+gap_size+1) % (2*N)]) {
+                unsigned int used_crossings = 0;
+                int k = (i+1) % (N*2);
+                for (int j=0; j<gap_size; j++, k=(k+1) % (N*2)) {
+                    if (code[k] == NONE) goto next_i;
+                    used_crossings |= (1<<code[k]);
+                }
+                if (__builtin_popcount(used_crossings) == gap_size) {
+                    for (int j=(i+gap_size+2)%(2*N); j!=i; j=(j+1)%(2*N)) {
+                        if ((1<<code[j]) & used_crossings) {
+                            between = !between;
+                            if (!between) {
+                                if (between_size) num_non_zero_between_sizes+=1;
+                                between_size = 0;
+                            }
+                        } else if (between) {
+                            between_size += 1;
+                            if (code[j] != NONE) unpaired ^= (1<<code[j]);
+                        }
+                    }
+                    if (unpaired || num_non_zero_between_sizes==1)
+                        return true;
+                }
+            }
+next_i:;
+        }
+    }
+    return false;
+
+}
+
+inline bool special_case_failures1(int i, int j, crossing* code, int mpg, int first_empty) {
+    if (i==1 && j==4)
+        // Array can't start with 01201 (because of dually pairedness)
+        return true;
+    else if (code[mpg+2]!=1) {
+        if (i>1 && code[first_empty-1]==code[j-1]) {
+            // if we don't have 01......01 then we can't have xi......xi
+            return true;
+        } else if (i>2 && code[first_empty-2]==code[j-2] && code[mpg+3]!=2) {
+            // if we don't have 01......01 and we don't have 012.....0x2 
+            // then we can't have x.i......x.i
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline bool special_case_failures2(int i, int j, int N, crossing* code, int mpg, int first_empty) {
+    if (i==2 && mpg==2) {
+        if ((j==N*2-1) || 
+                (code[j-1]!=1 && code[j+1]!=1) || 
+                (code[N*2-2]==1 && j==2*N-3) || 
+                (code[N*2-4]==1 && j==2*N-3) || 
+                (code[N*2-4]==1 && j==2*N-5))
+            return true; 
+    } else if (mpg==2) {
+        if (j-first_empty==3) {
+            crossing a = code[j-1];
+            crossing b = code[j-2];
+            for (int k=0; k<first_empty-1; k++) {
+                if (code[k]==a) {
+                    if (code[k+1]!=b) return true;
+                    break;
+                } else if (code[k]==b) {
+                    if (code[k+1]!=a) return true;
+                    break;
+                }
+            }
+        } else if (code[first_empty-1]==code[first_empty+2] && j<N*2-1) {
+            crossing a = code[first_empty+1];
+            if (code[j+1]!=a && code[j-1]!=a) return true; 
+        } else if (i>1 && code[first_empty-2]==code[first_empty+1] && j<N*2-1) {
+            crossing a = code[first_empty-1];
+            if (code[j+1]!=a && code[j-1]!=a) return true;
+        }
+    }
+    return false;
+}
+
+bool result_is_valid(crossing* code, int N, int mpg) {
+    return !quick_check(code, N) &&
+           is_lex_min_in_group_part_1(code, N, mpg+1) &&
+           is_dually_paired(code, N) &&
+           !is_connect_sum(code, N) &&
+           is_lex_min_in_group_part_2(code, N, mpg+1);
 }
 
 void search_recursive(crossing* code, int N, int i, int mpg) {
     // mpg is Min permissible gap
     
+    if (i<N-3 && i%2 && quick_check(code, N)) return;
+
     // Find first empty position in code
     int first_empty = i;
     while (code[first_empty] != NONE) first_empty++;
@@ -233,32 +333,20 @@ void search_recursive(crossing* code, int N, int i, int mpg) {
     // j is position of second occurrence of crossing i
     int j = first_empty + mpg + 1;
 
-    if (j<N*2 && code[mpg+2]!=1 && i>1 && code[first_empty-1]==code[j-1])
+    // if (j<N*2 && code[mpg+2]!=1 && i>1 && code[first_empty-1]==code[j-1])
+    if (j<N*2 && special_case_failures1(i, j, code, mpg, first_empty))
         j += 2;
 
     while (j < N*2) {
         if (code[j] == NONE) {
             int gap = j - first_empty - 1;
             gap = min(gap, N*2-gap-2);
-            if (gap >= mpg) {
-                if (i==2 && mpg==2 && j==N*2-1 && code[4]!=1) {
-                    // More symmetry breaking
-                    j+=2;
-                    continue;
-                }
+            if (gap >= mpg && !special_case_failures2(i, j, N, code, mpg, first_empty)) {
                 code[j] = i;
-                if (i < N-1) {
+                if (i < N-1)
                     search_recursive(code, N, i+1, mpg);
-                } else {
-                    if (
-                            is_lex_min_in_group_part_1(code, N, mpg+1) &&
-                            is_dually_paired(code, N) &&
-                            !is_connect_sum(code, N) &&
-                            is_lex_min_in_group_part_2(code, N, mpg+1)
-                            ) {
-                        print_code(code, N);
-                    }
-                }
+                else if (result_is_valid(code, N, mpg))
+                    print_code(code, N);
                 code[j] = NONE;
             }
         }
