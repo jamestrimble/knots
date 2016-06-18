@@ -132,13 +132,17 @@ def gap_4_quick_check(arr):
                 else:
                     b = arr[i+1:] + arr[:i+gap_size+1] # values between the two occurrences of arr[i]
                 if -1 not in b and len(b) == len(set(b)):  # alldiff(b)
+                    num_seen = 0
                     for j in range(i+gap_size+2, i+len(arr)):
                         if arr[j] in b:
+                            num_seen += 1
                             between = not between
                             if not between:
                                 if between_size:
                                     num_non_zero_between_sizes += 1
                                 between_size = 0
+                                if num_seen == gap_size:
+                                    break
                         elif between:
                             between_size += 1
                             if arr[j] != -1:

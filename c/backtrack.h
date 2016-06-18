@@ -236,12 +236,15 @@ bool quick_check(crossing* code, int N) {
                     used_crossings |= (1<<code[k]);
                 }
                 if (__builtin_popcount(used_crossings) == gap_size) {
+                    int num_seen = 0;
                     for (int j=(i+gap_size+2)%(2*N); j!=i; j=(j+1)%(2*N)) {
                         if ((1<<code[j]) & used_crossings) {
+                            num_seen++;
                             between = !between;
                             if (!between) {
                                 if (between_size) num_non_zero_between_sizes+=1;
                                 between_size = 0;
+                                if (num_seen == gap_size) break;
                             }
                         } else if (between) {
                             between_size += 1;
