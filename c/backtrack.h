@@ -217,40 +217,42 @@ void print_code(crossing* code, int N) {
     printf("\n");
 }
 
-bool quick_check(crossing* code, int N) {
+bool quick_check(crossing const * const code, const int N) {
     if (N < 10) return false;
 
     int unpaired = 0;   // A bitset, where bit i is set if crossing i
                         // doesn't appear twice in relevant areas
-    bool between = false;
     int between_size = 0;
     
     for (int gap_size=4; gap_size<10; gap_size+=2) {
+        int N2 = N * 2;
         for (int i=0; i<N-3; i++) { // Upper limit could be anything up to N*2
             int num_non_zero_between_sizes = 0;
-            if (code[i]!=NONE && code[i]==code[(i+gap_size+1) % (2*N)]) {
+            if (code[i]!=NONE && code[i]==code[(i+gap_size+1) % (N2)]) {
                 unsigned int used_crossings = 0;
-                int k = (i+1) % (N*2);
-                for (int j=0; j<gap_size; j++, k=(k+1) % (N*2)) {
+                int k = (i+1) % (N2);
+                for (int j=0; j<gap_size; j++, k=(k+1) % (N2)) {
                     if (code[k] == NONE) goto next_i;
                     used_crossings |= (1<<code[k]);
                 }
                 if (__builtin_popcount(used_crossings) == gap_size) {
                     int num_seen = 0;
-                    for (int j=(i+gap_size+2)%(2*N); j!=i; j=(j+1)%(2*N)) {
-                        if ((1<<code[j]) & used_crossings) {
-                            num_seen++;
-                            between = !between;
-                            if (!between) {
-                                if (between_size) num_non_zero_between_sizes+=1;
-                                between_size = 0;
-                                if (num_seen == gap_size) break;
-                            }
-                        } else if (between) {
+                    int j = (i+gap_size+2) % (N2);
+                    do {
+                        while (!((1<<code[j]) & used_crossings)) j=(j+1)%(N2);
+                        j=(j+1)%(N2);
+                        while (!((1<<code[j]) & used_crossings)) {
                             between_size += 1;
                             if (code[j] != NONE) unpaired ^= (1<<code[j]);
+                            j=(j+1)%(N2);
                         }
-                    }
+                        if (between_size) {
+                            num_non_zero_between_sizes+=1;
+                            between_size = 0;
+                        }
+                        j=(j+1)%(N2);
+                        num_seen += 2;
+                    } while (num_seen < gap_size);
                     if (unpaired || num_non_zero_between_sizes==1)
                         return true;
                 }
